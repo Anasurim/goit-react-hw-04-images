@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from 'components/Button/Button';
 import { fetchImages } from '../Services/ImageAPI';
 import { ImageGalleryItem } from './ImageGalleryItem';
@@ -7,116 +7,99 @@ import { ThreeDots } from 'react-loader-spinner';
 import css from '../ImageGallery/Gallery.module.css';
 import PropTypes from 'prop-types';
 
-export class ImageGallery extends Component {
-  state = {
-    imageHits: [],
-    isLoading: false,
-    error: null,
-    page: 1,
-    shownModal: false,
-    selectedImage: null,
-  };
+export function ImageGallery({ searchQuerry }) {
+  const [imageHits, setImageHits] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [shownModal, setShownModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const prevQuerry = prevProps.searchQuerry;
-    const nextQuerry = this.props.searchQuerry;
-
-    if (prevQuerry !== nextQuerry) {
-      this.setState({ isLoading: true });
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!searchQuerry) {
+        return;
+      }
+      setIsLoading(true);
 
       try {
-        const response = await fetchImages(nextQuerry);
-
+        const response = await fetchImages(searchQuerry);
         if (response !== undefined) {
-          return this.setState({
-            imageHits: response,
-          });
+          setImageHits(response);
+        } else {
+          resetPage();
         }
-
-        this.resetPage();
       } catch (error) {
-        this.setState({ error });
+        setError(error);
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
-    }
-  }
+    };
 
-  resetPage = () => {
-    this.setState({ imageHits: [], page: 1 });
+    fetchData();
+  }, [searchQuerry]);
+
+  const toggleModal = () => {
+    setShownModal(prevState => !prevState);
   };
 
-  onClick = async () => {
-    const { searchQuerry } = this.props;
-    const { page } = this.state;
+  const resetPage = () => {
+    setImageHits([]);
+    setPage(1);
+  };
 
-    this.setState({ isLoading: true });
+  const onClick = async () => {
+    setIsLoading(true);
 
     try {
       const response = await fetchImages(searchQuerry, page + 1);
 
       if (response !== undefined) {
-        return this.setState(prevState => ({
-          imageHits: [...prevState.imageHits, ...response],
-          page: prevState.page + 1,
-        }));
+        setImageHits(prevHits => [...prevHits, ...response]);
+        setPage(prevPage => prevPage + 1);
+      } else {
+        resetPage();
       }
-
-      this.resetPage();
     } catch (error) {
-      this.setState({ error });
+      setError(error);
     } finally {
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     }
   };
 
-  handleImageClick = imageUrl => {
-    this.setState({ selectedImage: imageUrl });
-    this.toggleModal();
+  const handleImageClick = imageUrl => {
+    setSelectedImage(imageUrl);
+    toggleModal();
   };
 
-  toggleModal = () => {
-    this.setState(({ shownModal }) => ({
-      shownModal: !shownModal,
-    }));
-  };
-
-  render() {
-    const { imageHits, isLoading, error, shownModal, selectedImage } =
-      this.state;
-
-    return (
-      <>
-        <div className={css.App}>
-          {error && <h2>Something went wrong...</h2>}
-          {isLoading && (
-            <ThreeDots
-              height="80"
-              width="80"
-              radius="9"
-              color="#3f51b5"
-              ariaLabel="three-dots-loading"
-              wrapperStyle={{}}
-              wrapperClassName=""
-              visible={true}
-            />
-          )}
-          {imageHits && (
-            <ul className={css.ImageGallery}>
-              <ImageGalleryItem
-                images={imageHits}
-                onClick={this.handleImageClick}
-              />
-            </ul>
-          )}
-          {imageHits.length >= 12 && <Button onClick={this.onClick} />}
-          {shownModal && (
-            <Modal onClose={this.toggleModal} imageUrl={selectedImage}></Modal>
-          )}
-        </div>
-      </>
-    );
-  }
+  return (
+    <>
+      <div className={css.App}>
+        {error && <h2>Something went wrong...</h2>}
+        {isLoading && (
+          <ThreeDots
+            height="80"
+            width="80"
+            radius="9"
+            color="#3f51b5"
+            ariaLabel="three-dots-loading"
+            wrapperStyle={{}}
+            wrapperClassName=""
+            visible={true}
+          />
+        )}
+        {imageHits && (
+          <ul className={css.ImageGallery}>
+            <ImageGalleryItem images={imageHits} onClick={handleImageClick} />
+          </ul>
+        )}
+        {imageHits.length >= 12 && <Button onClick={onClick} />}
+        {shownModal && (
+          <Modal onClose={toggleModal} imageUrl={selectedImage}></Modal>
+        )}
+      </div>
+    </>
+  );
 }
 
 ImageGallery.propTypes = {

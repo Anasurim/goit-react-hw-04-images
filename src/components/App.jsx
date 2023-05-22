@@ -7,7 +7,7 @@ export function App() {
   const [querry, setQuerry] = useState('');
 
   const handleFormSubmit = querry => {
-    setQuerry({ searchQuerry: querry });
+    setQuerry(querry);
   };
 
   return (
