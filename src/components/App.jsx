@@ -1,26 +1,21 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import PropTypes from 'prop-types';
 
-export class App extends Component {
-  state = {
-    searchQuerry: '',
+export function App() {
+  const [querry, setQuerry] = useState('');
+
+  const handleFormSubmit = querry => {
+    setQuerry({ searchQuerry: querry });
   };
 
-  handleFormSubmit = querry => {
-    this.setState({ searchQuerry: querry });
-  };
-
-  render() {
-    const { searchQuerry } = this.state;
-    return (
-      <>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery searchQuerry={searchQuerry} />
-      </>
-    );
-  }
+  return (
+    <>
+      <Searchbar onSubmit={handleFormSubmit} />
+      <ImageGallery searchQuerry={querry} />
+    </>
+  );
 }
 
 App.propTypes = {
