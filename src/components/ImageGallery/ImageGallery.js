@@ -26,6 +26,7 @@ export function ImageGallery({ searchQuerry }) {
         const response = await fetchImages(searchQuerry);
         if (response !== undefined) {
           setImageHits(response);
+          setPage(1);
         } else {
           resetPage();
         }
